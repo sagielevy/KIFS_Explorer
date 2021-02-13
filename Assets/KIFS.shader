@@ -3,7 +3,6 @@
 	Properties
 	{
         // Shader properties
-        _Pos ("Position", vector) = (0, 0, 0)
         _Scale ("Scale", float) = 1
         _Ang1 ("Angle 1", float) = 2.
         _Ang2 ("Angle 2", float) = 3.14
@@ -44,7 +43,7 @@
             }
 
             float4x4 _CamMat;
-            float3 _Pos, _Color, _Shift;
+            float3 _Color, _Shift;
             float2 _Resolution;
             float _Scale, _Ang1, _Ang2;
 
@@ -338,7 +337,7 @@
     
                 float4 ray = mul(_CamMat, normalize(float4(uv.x, uv.y, -FOCAL_DIST, 0.0)));
     
-                float4 position = float4(_Pos, 1);
+                float4 position = float4(_CamMat[0][3],_CamMat[1][3], _CamMat[2][3], 1);
     
                 float vignette = 1.0 - VIGNETTE_STRENGTH * length(screenPos - 0.5);
                 float4 col_r = scene(position, ray, vignette, FOVperPixel);

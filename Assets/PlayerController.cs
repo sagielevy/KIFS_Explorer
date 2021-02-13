@@ -2,9 +2,12 @@
 
 public class PlayerController : MonoBehaviour
 {
+    // TO unify these
+    const int FRACTAL_ITER = 20;
+
     [SerializeField] private Material gameMat;
 
-    public float speed = 0.001f;
+    public float maxSpeed = 0.01f;
     public float smoothSpeed = 0.03f;
     public float mouseSpeed = 1;
     public float randomizeDelta = 0.1f;
@@ -19,9 +22,10 @@ public class PlayerController : MonoBehaviour
     public Vector3 color = new Vector3(-0.42f, -0.38f, -0.19f);
     public Vector3 shift = new Vector3(-4.0f, -1.0f, -1.0f);
 
+    private float speed = 0.01f;
+
     private Vector3 smoothPosition;
     private Quaternion smoothCamRotation;
-
     private float smoothScale;
     private float smoothAngle1;
     private float smoothAngle2;
@@ -44,8 +48,65 @@ public class PlayerController : MonoBehaviour
     private void Update()
     {
         HandleInput();
+        UpdateSpeed();
         SmoothParameters();
         UpdateShader();
+    }
+
+    private void UpdateSpeed()
+    {
+        const float damp = 10000000;
+        var estimatedDistance = Mathf.Max(DE(position) / damp, 0);
+
+        speed = Mathf.Min(estimatedDistance, maxSpeed);
+    }
+
+    //Hard-coded to match the fractal
+    private float DE(Vector3 p)
+    {
+        //Vector4 p = new Vector4(pt.x, pt.y, pt.z, 1);
+
+        for (int i = 0; i < FRACTAL_ITER; i++)
+        {
+            //absFold
+            p = new Vector3(Mathf.Abs(p.x), Mathf.Abs(p.y), Mathf.Abs(p.z));
+
+            //rotZ
+            float rotz_c = Mathf.Cos(angle1);
+            float rotz_s = Mathf.Sin(angle1);
+            float rotz_x = rotz_c * p.x + rotz_s * p.y;
+            float rotz_y = rotz_c * p.y - rotz_s * p.x;
+            p.x = rotz_x;
+            p.y = rotz_y;
+
+            //mengerFold
+            float mf = Mathf.Min(p.x - p.y, 0.0f);
+            p.x -= mf; p.y += mf;
+            mf = Mathf.Min(p.x - p.z, 0.0f);
+            p.x -= mf;
+            p.z += mf;
+            mf = Mathf.Min(p.y - p.z, 0.0f);
+            p.y -= mf;
+            p.z += mf;
+
+            //rotX
+            float rotx_c = Mathf.Cos(angle2);
+            float rotx_s = Mathf.Sin(angle2);
+            float rotx_y = rotx_c * p.y + rotx_s * p.z;
+            float rotx_z = rotx_c * p.z - rotx_s * p.y;
+            p.y = rotx_y;
+            p.z = rotx_z;
+
+            //scaleTrans
+            p *= scale;
+            p += shift;
+        }
+
+        Vector3 a = new Vector3(Mathf.Abs(p.x), Mathf.Abs(p.y), Mathf.Abs(p.z)) -
+                new Vector3(6.0f, 6.0f, 6.0f);
+
+        return Mathf.Min(Mathf.Max(Mathf.Max(a.x, a.y), a.z), 0.0f) +
+                new Vector3(Mathf.Max(a.x, 0), Mathf.Max(a.y, 0), Mathf.Max(a.z, 0)).sqrMagnitude;
     }
 
     private void HandleInput()
@@ -112,7 +173,6 @@ public class PlayerController : MonoBehaviour
 
     private void UpdateShader()
     {
-        gameMat.SetVector("_Pos", smoothPosition);
         gameMat.SetFloat("_Scale", smoothScale);
         gameMat.SetFloat("_Ang1", smoothAngle1);
         gameMat.SetFloat("_Ang2", smoothAngle2);
@@ -120,7 +180,7 @@ public class PlayerController : MonoBehaviour
         gameMat.SetVector("_Shift", smoothShift);
         gameMat.SetVector("_Resolution", new Vector2(Screen.width, Screen.height));
 
-        var camMat = Matrix4x4.TRS(Vector3.zero, smoothCamRotation, Vector3.one);
+        var camMat = Matrix4x4.TRS(smoothPosition, smoothCamRotation, Vector3.one);
         gameMat.SetMatrix("_CamMat", camMat);
     }
 }
