@@ -57,15 +57,15 @@ public class PlayerController : MonoBehaviour
 
     private void UpdateSpeed()
     {
-        const float damp = 1.0f / 10000000;
-        float lod = 1.0f / (800000 * lodIncreaseStartMultiplier);
+        const float damp = 1.0f / 100000;
+        float lod = 1.0f / (1000 * lodIncreaseStartMultiplier);
         var estimatedDistance = Mathf.Max(DE(position, minFractalIter), 0);
 
         
         shaderFractalIter = Mathf.RoundToInt(
             Mathf.Lerp(maxFractalIter, minFractalIter, Mathf.Clamp01(Mathf.Sqrt(estimatedDistance * lod))));
 
-        Debug.Log($"fract {shaderFractalIter} de { Mathf.Sqrt(estimatedDistance * lod) } " );
+        //Debug.Log($"fract {shaderFractalIter} de { Mathf.Sqrt(estimatedDistance * lod) } " );
 
         speed = Mathf.Min(estimatedDistance * damp, maxSpeed);
     }
@@ -115,7 +115,7 @@ public class PlayerController : MonoBehaviour
                 new Vector3(6.0f, 6.0f, 6.0f);
 
         return Mathf.Min(Mathf.Max(Mathf.Max(a.x, a.y), a.z), 0.0f) +
-                new Vector3(Mathf.Max(a.x, 0), Mathf.Max(a.y, 0), Mathf.Max(a.z, 0)).sqrMagnitude;
+                new Vector3(Mathf.Max(a.x, 0), Mathf.Max(a.y, 0), Mathf.Max(a.z, 0)).magnitude;
     }
 
     private void HandleInput()
