@@ -46,6 +46,7 @@
             float3 _Color, _Shift;
             float2 _Resolution;
             float _Scale, _Ang1, _Ang2;
+            int _FractalIter;
 
             #define AMBIENT_OCCLUSION_COLOR_DELTA float3(0.7, 0.7, 0.7)
             #define AMBIENT_OCCLUSION_STRENGTH 0.008
@@ -58,7 +59,6 @@
             #define FILTERING_ENABLE 0
             #define FOCAL_DIST 1.73205080757
             #define FOG_ENABLED 0
-            #define FRACTAL_ITER 20
             #define LIGHT_COLOR float3(1.0,0.95,0.8)
             #define LIGHT_DIRECTION float3(-0.36, 0.8, 0.48)
             #define MAX_DIST 30.0
@@ -163,7 +163,7 @@
             //   Main DEs
             //##########################################
             float de_fractal(float4 p) {
-                for (int i = 0; i < FRACTAL_ITER; ++i) {
+                for (int i = 0; i < _FractalIter; ++i) {
                     p.xyz = abs(p.xyz);
                     p = rotZ(p, _Ang1);
                     p = mengerFold(p);
@@ -176,7 +176,7 @@
 
             float4 col_fractal(float4 p) {
                 float3 orbit = float3(0.0, 0.0, 0.0);
-                for (int i = 0; i < FRACTAL_ITER; ++i) {
+                for (int i = 0; i < _FractalIter; ++i) {
                     p.xyz = abs(p.xyz);
                     p = rotZ(p, _Ang1);
                     p = mengerFold(p);
@@ -246,6 +246,7 @@
                 //Determine the color for this pixel
                 float4 col = float4(0.0, 0.0, 0.0, 0.0);
                 float min_dist = max(FOVperPixel*td, MIN_DIST);
+
                 if (d < min_dist) {
                     //Get the surface normal
                     float3 n = calcNormal(p, min_dist*0.5);

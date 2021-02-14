@@ -153,7 +153,10 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   gameMat: {fileID: 2100000, guid: 5a31ddebce3f64a8ea4af17cf402d572, type: 2}
-  speed: 0.01
+  lodIncreaseStartMultiplier: 6
+  minFractalIter: 16
+  maxFractalIter: 30
+  maxSpeed: 0.01
   smoothSpeed: 0.03
   mouseSpeed: 0.5
   randomizeDelta: 0.1

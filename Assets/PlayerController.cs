@@ -2,11 +2,12 @@
 
 public class PlayerController : MonoBehaviour
 {
-    // TO unify these
-    const int FRACTAL_ITER = 20;
-
     [SerializeField] private Material gameMat;
 
+    [Range(0.1f, 100)] public float lodIncreaseStartMultiplier = 1;
+
+    public int minFractalIter = 16;
+    public int maxFractalIter = 30;
     public float maxSpeed = 0.01f;
     public float smoothSpeed = 0.03f;
     public float mouseSpeed = 1;
@@ -22,6 +23,7 @@ public class PlayerController : MonoBehaviour
     public Vector3 color = new Vector3(-0.42f, -0.38f, -0.19f);
     public Vector3 shift = new Vector3(-4.0f, -1.0f, -1.0f);
 
+    private int shaderFractalIter = 20;
     private float speed = 0.01f;
 
     private Vector3 smoothPosition;
@@ -55,18 +57,25 @@ public class PlayerController : MonoBehaviour
 
     private void UpdateSpeed()
     {
-        const float damp = 10000000;
-        var estimatedDistance = Mathf.Max(DE(position) / damp, 0);
+        const float damp = 1.0f / 10000000;
+        float lod = 1.0f / (800000 * lodIncreaseStartMultiplier);
+        var estimatedDistance = Mathf.Max(DE(position, minFractalIter), 0);
 
-        speed = Mathf.Min(estimatedDistance, maxSpeed);
+        
+        shaderFractalIter = Mathf.RoundToInt(
+            Mathf.Lerp(maxFractalIter, minFractalIter, Mathf.Clamp01(Mathf.Sqrt(estimatedDistance * lod))));
+
+        Debug.Log($"fract {shaderFractalIter} de { Mathf.Sqrt(estimatedDistance * lod) } " );
+
+        speed = Mathf.Min(estimatedDistance * damp, maxSpeed);
     }
 
     //Hard-coded to match the fractal
-    private float DE(Vector3 p)
+    private float DE(Vector3 p, int iter)
     {
         //Vector4 p = new Vector4(pt.x, pt.y, pt.z, 1);
 
-        for (int i = 0; i < FRACTAL_ITER; i++)
+        for (int i = 0; i < iter; i++)
         {
             //absFold
             p = new Vector3(Mathf.Abs(p.x), Mathf.Abs(p.y), Mathf.Abs(p.z));
@@ -179,6 +188,7 @@ public class PlayerController : MonoBehaviour
         gameMat.SetVector("_Color", smoothColor);
         gameMat.SetVector("_Shift", smoothShift);
         gameMat.SetVector("_Resolution", new Vector2(Screen.width, Screen.height));
+        gameMat.SetInt("_FractalIter", shaderFractalIter);
 
         var camMat = Matrix4x4.TRS(smoothPosition, smoothCamRotation, Vector3.one);
         gameMat.SetMatrix("_CamMat", camMat);
